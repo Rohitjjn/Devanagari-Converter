@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { processTextK2U } from "@/lib/k2u";
 import { processTextU2K } from "@/lib/u2k";
 
+export const runtime = 'edge';
+
 export async function POST(req: NextRequest) {
   try {
     const { text, mode, options } = await req.json();
