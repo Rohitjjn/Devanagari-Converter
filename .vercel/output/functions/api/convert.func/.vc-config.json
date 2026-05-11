@@ -1,0 +1,18 @@
+{
+  "runtime": "edge",
+  "name": "api/convert",
+  "deploymentTarget": "v8-worker",
+  "entrypoint": "index.js",
+  "assets": [],
+  "framework": {
+    "slug": "nextjs",
+    "version": "15.4.11"
+  },
+  "environment": {
+    "__NEXT_BUILD_ID": "GatfAHJZddM4l4nqYu-87",
+    "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "OFz8Yuz9hsQRBHOwFBNFuYfLpjgX3VfGOPMpmAEIPc0=",
+    "__NEXT_PREVIEW_MODE_ID": "d3d79924eade77102c4c144c2ed0e43b",
+    "__NEXT_PREVIEW_MODE_SIGNING_KEY": "891036882471c4a549ca267508962a0782fa97d549e524fccac437bbbee7114f",
+    "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "ca7df4e19f04d1165493b21cf159a750e121460a0aa8a2a8ccdd993d751df8fc"
+  }
+}
