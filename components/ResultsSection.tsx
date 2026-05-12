@@ -32,9 +32,7 @@ export default function ResultsSection({
       const folder = zip.folder("converted");
 
       for (const r of successful) {
-        const outName =
-          r.name.replace(/\.txt$/i, "") +
-          (mode === "k2u" ? "_unicode.txt" : "_krutidev.txt");
+        const outName = r.name;
         folder!.file(outName, r.output);
       }
 
