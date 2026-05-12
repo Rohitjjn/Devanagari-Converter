@@ -110,45 +110,49 @@ export default function BatchProcessor({
     let completed = 0;
     const batchResults: BatchResult[] = [];
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      setCurrentFileName(`⏳ ${file.name}`);
-      addLog(`Processing: ${file.name}`, "info");
-
-      try {
-        const res = await fetch("/api/convert", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: file.text, mode, options }),
-        });
-        const data = await res.json();
-        
-        if (data.success) {
+    const CONCURRENCY_LIMIT = 5; // Process up to 5 files simultaneously to reduce network waterfall
+    
+    for (let i = 0; i < files.length; i += CONCURRENCY_LIMIT) {
+      const chunk = files.slice(i, i + CONCURRENCY_LIMIT);
+      
+      setCurrentFileName(`⏳ Processing ${i + 1} - ${Math.min(i + CONCURRENCY_LIMIT, files.length)} of ${files.length}...`);
+      
+      await Promise.all(chunk.map(async (file) => {
+        try {
+          const res = await fetch("/api/convert", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: file.text, mode, options }),
+          });
+          const data = await res.json();
+          
+          if (data.success) {
+            batchResults.push({
+              name: file.name,
+              output: data.text,
+              warnings: data.warnings,
+              success: true,
+              charCount: data.charCount,
+              timeMs: data.timeMs,
+            });
+            addLog(`Converted: ${file.name}`, "success");
+          } else {
+            throw new Error(data.error);
+          }
+        } catch (err: any) {
           batchResults.push({
             name: file.name,
-            output: data.text,
-            warnings: data.warnings,
-            success: true,
-            charCount: data.charCount,
-            timeMs: data.timeMs,
+            output: "",
+            warnings: [err.message],
+            success: false,
+            charCount: file.text.length,
+            timeMs: 0,
           });
-          addLog(`Converted: ${file.name}`, "success");
-        } else {
-          throw new Error(data.error);
+          addLog(`Failed: ${file.name} — ${err.message}`, "error");
         }
-      } catch (err: any) {
-        batchResults.push({
-          name: file.name,
-          output: "",
-          warnings: [err.message],
-          success: false,
-          charCount: file.text.length,
-          timeMs: 0,
-        });
-        addLog(`Failed: ${file.name} — ${err.message}`, "error");
-      }
+      }));
 
-      completed++;
+      completed += chunk.length;
       setProgress((completed / files.length) * 100);
       
       // small delay to let UI update
@@ -189,6 +193,15 @@ export default function BatchProcessor({
 
         <div
           className="drop-zone cursor-pointer"
+          tabIndex={0}
+          role="button"
+          aria-label="Upload files: Drag and drop or press Enter to select"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              fileInputRef.current?.click();
+            }
+          }}
           onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("drag-over"); }}
           onDragLeave={(e) => { e.preventDefault(); e.currentTarget.classList.remove("drag-over"); }}
           onDrop={(e) => {
@@ -243,6 +256,7 @@ export default function BatchProcessor({
               <button
                 className="text-xs text-[var(--text-muted)] hover:text-[var(--error)] transition-colors flex items-center gap-1 font-medium"
                 onClick={clearFiles}
+                aria-label="Clear all selected files"
               >
                 <Trash size={12} />
                 Clear all
@@ -259,6 +273,7 @@ export default function BatchProcessor({
                   <button
                     className="ml-1 text-[var(--text-muted)] hover:text-[var(--error)] transition-colors"
                     onClick={() => removeFile(idx)}
+                    aria-label={`Remove file ${file.name}`}
                   >
                     ✕
                   </button>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, Delete, RefreshCw, XCircle } from "lucide-react";
+import { Copy, Delete, RefreshCw, XCircle, Check } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 export default function LiveConverter({
@@ -17,6 +17,9 @@ export default function LiveConverter({
   const [warnings, setWarnings] = useState<string[]>([]);
   const [isRotated, setIsRotated] = useState(false);
   const [prevMode, setPrevMode] = useState(mode);
+
+  const [copiedInput, setCopiedInput] = useState(false);
+  const [copiedOutput, setCopiedOutput] = useState(false);
 
   if (mode !== prevMode) {
     setInput(output);
@@ -75,11 +78,17 @@ export default function LiveConverter({
     swapMode();
   };
 
-  const copyToClipboard = async (text: string) => {
+  const copyToClipboard = async (text: string, isInput: boolean) => {
     if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
-      // Optional: show toast here
+      if (isInput) {
+        setCopiedInput(true);
+        setTimeout(() => setCopiedInput(false), 2000);
+      } else {
+        setCopiedOutput(true);
+        setTimeout(() => setCopiedOutput(false), 2000);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -110,7 +119,7 @@ export default function LiveConverter({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button className="btn-icon" onClick={clearLive} title="Clear">
+          <button className="btn-icon" onClick={clearLive} title="Clear input and output text" aria-label="Clear input and output text">
              <Delete size={16} />
           </button>
         </div>
@@ -130,10 +139,11 @@ export default function LiveConverter({
               <button
                 className="btn-icon"
                 style={{ width: "28px", height: "28px" }}
-                onClick={() => copyToClipboard(input)}
+                onClick={() => copyToClipboard(input, true)}
                 title="Copy input"
+                aria-label="Copy input text"
               >
-                <Copy size={14} />
+                {copiedInput ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
               </button>
             </div>
           </div>
@@ -158,7 +168,8 @@ export default function LiveConverter({
             }`}
             style={{ background: "var(--bg-card-solid)", color: "var(--accent)" }}
             onClick={handleSwap}
-            title="Swap direction"
+            title="Swap conversion direction"
+            aria-label="Swap conversion direction"
           >
             <RefreshCw size={18} />
           </button>
@@ -177,10 +188,11 @@ export default function LiveConverter({
               <button
                 className="btn-icon"
                 style={{ width: "28px", height: "28px" }}
-                onClick={() => copyToClipboard(output)}
+                onClick={() => copyToClipboard(output, false)}
                 title="Copy output"
+                aria-label="Copy output text"
               >
-                <Copy size={14} />
+                {copiedOutput ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
               </button>
             </div>
           </div>
@@ -207,7 +219,7 @@ export default function LiveConverter({
               style={{ color: "var(--warning)" }}
             >
               <XCircle size={12} />
-              <span dangerouslySetInnerHTML={{ __html: w }} />
+              <span>{w}</span>
             </div>
           ))}
         </div>
