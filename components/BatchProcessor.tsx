@@ -5,9 +5,9 @@ import { useState, useRef, useEffect } from "react";
 import JSZip from "jszip";
 import { Archive } from "libarchive.js";
 
-// Initialize libarchive.js worker using our locally served API route
+// Initialize libarchive.js worker
 Archive.init({
-    workerUrl: "/api/libarchive/worker-bundle.js",
+    workerUrl: "/worker-bundle.js",
 });
 
 export interface BatchResult {
@@ -30,6 +30,8 @@ export default function BatchProcessor({
 }) {
   const [files, setFiles] = useState<{ name: string; text: string; size: number }[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [extractionError, setExtractionError] = useState("");
   const [progress, setProgress] = useState(0);
   const [currentFileName, setCurrentFileName] = useState("");
   const [logs, setLogs] = useState<{ time: string; msg: string; type: string }[]>([]);
@@ -68,13 +70,23 @@ export default function BatchProcessor({
                const currentPath = pathPrefix ? `${pathPrefix}/${key}` : key;
                if (!val) continue;
                
-               if (typeof val === "object" && !(val instanceof File)) {
-                 await processExtracted(val, currentPath);
-               } else if (val instanceof File) {
+               // Check if it's a file-like object using duck typing
+               if (typeof val === "object" && val !== null && "size" in val) {
                  if (currentPath.match(/\.(txt|csv|md|json|xml|html|htm|srt|vtt|rtf|log|tsv|js|css)$/i)) {
-                   const text = await val.text();
+                   let text = "";
+                   if (typeof (val as any).text === "function") {
+                     text = await (val as any).text();
+                   } else if ((val as any).fileData) {
+                     text = new TextDecoder().decode((val as any).fileData);
+                   } else if ((val as any).arrayBuffer) {
+                     const buf = await (val as any).arrayBuffer();
+                     text = new TextDecoder().decode(buf);
+                   }
                    entries.push({ name: currentPath, text, size: text.length });
                  }
+               } else if (typeof val === "object") {
+                 // It's a directory
+                 await processExtracted(val, currentPath);
                }
              }
            };
@@ -100,18 +112,28 @@ export default function BatchProcessor({
   };
 
   const handleFiles = async (fileList: FileList | File[]) => {
+    setIsExtracting(true);
+    setExtractionError("");
     let added = 0;
     const newFiles = [...files];
-    for (const file of Array.from(fileList)) {
-      const extracted = await extractFile(file);
-      for (const entry of extracted) {
-         newFiles.push(entry);
-         added++;
+    try {
+      for (const file of Array.from(fileList)) {
+        const extracted = await extractFile(file);
+        for (const entry of extracted) {
+           newFiles.push(entry);
+           added++;
+        }
       }
-    }
-    setFiles(newFiles);
-    if (added > 0) {
-      addLog(`Added ${added} file(s)`, "success");
+      setFiles(newFiles);
+      if (added > 0) {
+        addLog(`Added ${added} file(s)`, "success");
+      } else {
+        setExtractionError("No valid text/csv/xml files found in the selected files.");
+      }
+    } catch (e: any) {
+      setExtractionError(e.message || "Unknown error during extraction.");
+    } finally {
+      setIsExtracting(false);
     }
   };
 
@@ -217,7 +239,7 @@ export default function BatchProcessor({
         </div>
 
         <div
-          className="drop-zone cursor-pointer"
+          className={`drop-zone cursor-pointer ${isExtracting ? 'opacity-50 pointer-events-none' : ''}`}
           tabIndex={0}
           role="button"
           aria-label="Upload files: Drag and drop or press Enter to select"
@@ -241,10 +263,10 @@ export default function BatchProcessor({
               className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
               style={{ background: "var(--accent-light)", color: "var(--accent)" }}
             >
-              <FileType size={28} />
+              {isExtracting ? <Loader2 size={28} className="animate-spin" /> : <FileType size={28} />}
             </div>
             <p className="text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
-              Drop files here to convert
+              {isExtracting ? "Extracting files..." : "Drop files here to convert"}
             </p>
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>
               Supports .txt, .csv, .json, .md, .html, .xml and archives (.zip, .rar, .7z, .tar, .gz)
@@ -256,13 +278,18 @@ export default function BatchProcessor({
                  </span>
               ))}
             </div>
+            {extractionError && (
+              <div className="mt-4 text-xs font-semibold" style={{ color: "var(--error)" }}>
+                {extractionError}
+              </div>
+            )}
           </div>
           <input
             type="file"
             ref={fileInputRef}
             className="hidden"
             multiple
-            accept=".txt,.csv,.md,.json,.xml,.html,.htm,.srt,.vtt,.rtf,.log,.tsv,.js,.css,.zip,.rar,.7z,.tar,.gz,.bz2,.xz,.tgz"
+            accept=".txt,.csv,.md,.json,.xml,.html,.htm,.srt,.vtt,.rtf,.log,.tsv,.js,.css,.zip,.rar,.7z,.tar,.gz,.bz2,.xz,.tgz,application/vnd.rar,application/x-rar-compressed,application/x-7z-compressed,application/zip,application/x-tar,application/gzip,application/x-bzip2,application/x-xz,text/*"
             onChange={(e) => {
               if (e.target.files) {
                  handleFiles(e.target.files);
