@@ -1,8 +1,14 @@
 "use client";
 
 import { FileType, Trash, Download, Loader2 } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import JSZip from "jszip";
+import { Archive } from "libarchive.js";
+
+// Initialize libarchive.js worker using our locally served API route
+Archive.init({
+    workerUrl: "/api/libarchive/worker-bundle.js",
+});
 
 export interface BatchResult {
   name: string;
@@ -45,7 +51,7 @@ export default function BatchProcessor({
         const buffer = await file.arrayBuffer();
         const zip = await JSZip.loadAsync(buffer);
         for (const [path, entry] of Object.entries(zip.files)) {
-          if (!entry.dir && path.toLowerCase().endsWith(".txt")) {
+          if (!entry.dir && path.match(/\.(txt|csv|md|json|xml|html|htm|srt|vtt|rtf|log|tsv|js|css)$/i)) {
             const text = await entry.async("string");
             entries.push({ name: path, text, size: text.length });
           }
@@ -53,12 +59,31 @@ export default function BatchProcessor({
       } else if (
         [".7z", ".rar", ".tar", ".gz", ".bz2", ".xz", ".tgz", ".tar.gz", ".tar.bz2", ".tar.xz"].some((ext) => name.endsWith(ext))
       ) {
-         // Fallback if libarchive is set up, else ignore/error.
-         // In Next.js we use the global archiveLib if loaded in layout.
-         // Assume we might just error if it's not loaded cleanly.
-         // For simplicity and 100% adherence to pure Next.js without worker setup mess:
-         throw new Error("Only .zip and .txt are fully supported in this environment without custom web worker setup.");
-      } else if (name.endsWith(".txt")) {
+         try {
+           const archive = await Archive.open(file);
+           const extracted = await archive.extractFiles();
+           
+           const processExtracted = async (obj: any, pathPrefix = "") => {
+             for (const [key, val] of Object.entries(obj)) {
+               const currentPath = pathPrefix ? `${pathPrefix}/${key}` : key;
+               if (!val) continue;
+               
+               if (typeof val === "object" && !(val instanceof File)) {
+                 await processExtracted(val, currentPath);
+               } else if (val instanceof File) {
+                 if (currentPath.match(/\.(txt|csv|md|json|xml|html|htm|srt|vtt|rtf|log|tsv|js|css)$/i)) {
+                   const text = await val.text();
+                   entries.push({ name: currentPath, text, size: text.length });
+                 }
+               }
+             }
+           };
+           
+           await processExtracted(extracted);
+         } catch (e: any) {
+           throw new Error(`Archive extraction failed: ${e.message}`);
+         }
+      } else if (name.match(/\.(txt|csv|md|json|xml|html|htm|srt|vtt|rtf|log|tsv|js|css)$/i)) {
         const reader = new FileReader();
         const text = await new Promise<string>((resolve, reject) => {
           reader.onload = () => resolve(reader.result as string);
@@ -222,10 +247,10 @@ export default function BatchProcessor({
               Drop files here to convert
             </p>
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              Supports .txt, .zip
+              Supports .txt, .csv, .json, .md, .html, .xml and archives (.zip, .rar, .7z, .tar, .gz)
             </p>
             <div className="flex flex-wrap justify-center gap-2 mt-4">
-              {['TXT', 'ZIP'].map(ext => (
+              {['TEXT', 'CSV', 'JSON', 'ARCHIVE'].map(ext => (
                  <span key={ext} className="px-2.5 py-1 rounded-lg text-[10px] font-semibold border border-[var(--border)] text-[var(--text-muted)]">
                    {ext}
                  </span>
@@ -237,7 +262,7 @@ export default function BatchProcessor({
             ref={fileInputRef}
             className="hidden"
             multiple
-            accept=".txt,.zip"
+            accept=".txt,.csv,.md,.json,.xml,.html,.htm,.srt,.vtt,.rtf,.log,.tsv,.js,.css,.zip,.rar,.7z,.tar,.gz,.bz2,.xz,.tgz"
             onChange={(e) => {
               if (e.target.files) {
                  handleFiles(e.target.files);

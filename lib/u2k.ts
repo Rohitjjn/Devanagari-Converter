@@ -231,26 +231,32 @@ function processDevanagariSegment(text: string) {
   text = reorderReph(text);
   text = applyHalfForms(text);
   const result: string[] = [];
+  const segmentWarnings: string[] = [];
   let devaBuffer: string[] = [];
+  
+  const flushBuffer = () => {
+    if (devaBuffer.length) {
+      const mapped = mapDevanagariChars(devaBuffer);
+      result.push(mapped.output);
+      mapped.unmapped.forEach(u => segmentWarnings.push(`UNMAPPED: "${u.char}" ${u.codepoint}`));
+      devaBuffer = [];
+    }
+  };
+
   for (const ch of text) {
     if (ch === '\x01' || ch === '\x02' || DEVA_RANGE.test(ch)) {
       devaBuffer.push(ch);
     } else {
-      if (devaBuffer.length) {
-        const mapped = mapDevanagariChars(devaBuffer);
-        result.push(mapped.output);
-        devaBuffer = [];
-      }
+      flushBuffer();
       result.push(ch);
     }
   }
-  if (devaBuffer.length) {
-    const mapped = mapDevanagariChars(devaBuffer);
-    result.push(mapped.output);
-  }
+  flushBuffer();
+  
   let output = result.join('');
   const post = postProcess(output);
-  return post.output;
+  segmentWarnings.push(...post.warnings);
+  return { output: post.output, warnings: segmentWarnings };
 }
 
 export function processTextU2K(input: string) {
@@ -262,8 +268,15 @@ export function processTextU2K(input: string) {
   const segments = splitSegments(text);
   let output = '';
   for (const seg of segments) {
-    output += seg.isDeva ? processDevanagariSegment(seg.text) : applyAsciiMap(seg.text);
+    if (seg.isDeva) {
+      const processed = processDevanagariSegment(seg.text);
+      output += processed.output;
+      warnings.push(...processed.warnings);
+    } else {
+      output += applyAsciiMap(seg.text);
+    }
   }
   const processingTimeMs = Math.round(Date.now()-t0);
-  return { text: output, warnings, charCount: input.length };
+  return { text: output, warnings: [...new Set(warnings)], charCount: input.length };
 }
+

@@ -374,5 +374,5 @@ export function processTextK2U(text: string) {
     start = end;
   }
 
-  return { text: processed, warnings, charCount };
+  return { text: processed, warnings: [...new Set(warnings)], charCount };
 }
