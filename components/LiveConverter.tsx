@@ -2,6 +2,8 @@
 
 import { Copy, Delete, RefreshCw, XCircle, Check } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { processTextK2U } from "@/lib/k2u";
+import { processTextU2K } from "@/lib/u2k";
 
 export default function LiveConverter({
   mode,
@@ -32,7 +34,7 @@ export default function LiveConverter({
 
   const isK2U = mode === "k2u";
 
-  const convertText = async (text: string) => {
+  const convertText = (text: string) => {
     if (!text) {
       setOutput("");
       setWarnings([]);
@@ -40,18 +42,29 @@ export default function LiveConverter({
     }
 
     try {
-      const res = await fetch("/api/convert", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, mode, options }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setOutput(data.text);
-        setWarnings(data.warnings);
-      } else {
-        setWarnings([data.error]);
+      let processedText = text;
+      const preWarnings: string[] = [];
+
+      if (options?.stripBom && processedText.charCodeAt(0) === 0xfeff) {
+        processedText = processedText.slice(1);
+        preWarnings.push("Stripped UTF-8 BOM");
       }
+      if (options?.nfc) {
+        processedText = processedText.normalize("NFC");
+      }
+      if (options?.crlf) {
+        processedText = processedText.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+      }
+
+      let result;
+      if (mode === "k2u") {
+        result = processTextK2U(processedText);
+      } else {
+        result = processTextU2K(processedText);
+      }
+
+      setOutput(result.text);
+      setWarnings([...preWarnings, ...(result.warnings || [])]);
     } catch (e: any) {
       setWarnings([e.message]);
     }
@@ -61,10 +74,11 @@ export default function LiveConverter({
     if (!options.autoConvert) return;
     const timer = setTimeout(() => {
       convertText(input);
-    }, 300);
+    }, 50); // Reduced debounce time for snappier feedback since it's client-side
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [input, mode, options]);
+
 
   const clearLive = () => {
     setInput("");
@@ -150,7 +164,7 @@ export default function LiveConverter({
           <div className="editor-box">
             <textarea
               ref={inputRef}
-              className="editor-textarea font-deva"
+              className="editor-textarea font-deva min-h-[350px] md:min-h-[450px]"
               placeholder={isK2U ? "Type or paste text here..." : "यहाँ यूनिकोड हिंदी टाइप करें..."}
               spellCheck="false"
               value={input}
@@ -199,7 +213,7 @@ export default function LiveConverter({
           <div className="editor-box">
             <textarea
               ref={outputRef}
-              className="editor-textarea font-deva"
+              className="editor-textarea font-deva min-h-[350px] md:min-h-[450px]"
               readOnly
               placeholder="Converted output will appear here..."
               spellCheck="false"

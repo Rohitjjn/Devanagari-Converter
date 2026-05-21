@@ -362,7 +362,7 @@ export function processTextK2U(text: string) {
   while (start < charCount) {
     let end = start + MAX_CHUNK_SIZE;
     if (end < charCount) {
-      while (end > start && text.charAt(end) !== ' ') end--;
+      while (end > start && text.charAt(end) !== ' ' && text.charAt(end) !== '\n') end--;
       if (end === start) end = start + MAX_CHUNK_SIZE;
     } else {
       end = charCount;

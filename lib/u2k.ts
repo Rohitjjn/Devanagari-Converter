@@ -259,12 +259,10 @@ function processDevanagariSegment(text: string) {
   return { output: post.output, warnings: segmentWarnings };
 }
 
-export function processTextU2K(input: string) {
+export function convertUnicodeToKrutidev(input: string) {
   const warnings: string[] = [];
   let text = input;
 
-  const t0 = Date.now();
-  
   const segments = splitSegments(text);
   let output = '';
   for (const seg of segments) {
@@ -276,7 +274,37 @@ export function processTextU2K(input: string) {
       output += applyAsciiMap(seg.text);
     }
   }
-  const processingTimeMs = Math.round(Date.now()-t0);
-  return { text: output, warnings: [...new Set(warnings)], charCount: input.length };
+  return { text: output, warnings };
+}
+
+export function processTextU2K(input: string) {
+  const MAX_CHUNK_SIZE = 6000;
+  const charCount = input.length;
+
+  if (charCount <= MAX_CHUNK_SIZE) {
+    const result = convertUnicodeToKrutidev(input);
+    return { ...result, charCount };
+  }
+
+  let processed = '';
+  const warnings: string[] = [];
+  let start = 0;
+
+  while (start < charCount) {
+    let end = start + MAX_CHUNK_SIZE;
+    if (end < charCount) {
+      while (end > start && input.charAt(end) !== ' ' && input.charAt(end) !== '\n') end--;
+      if (end === start) end = start + MAX_CHUNK_SIZE;
+    } else {
+      end = charCount;
+    }
+    const chunk = input.substring(start, end);
+    const result = convertUnicodeToKrutidev(chunk);
+    processed += result.text;
+    warnings.push(...result.warnings);
+    start = end;
+  }
+
+  return { text: processed, warnings: [...new Set(warnings)], charCount };
 }
 

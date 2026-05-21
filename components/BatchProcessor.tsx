@@ -4,6 +4,8 @@ import { FileType, Trash, Download, Loader2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import JSZip from "jszip";
 import { Archive } from "libarchive.js";
+import { processTextK2U } from "@/lib/k2u";
+import { processTextU2K } from "@/lib/u2k";
 
 // Initialize libarchive.js worker
 Archive.init({
@@ -147,6 +149,37 @@ export default function BatchProcessor({
     onResults([], 0); // clear results
   };
 
+  const processFileClient = (text: string) => {
+    let processedText = text;
+    const preWarnings: string[] = [];
+
+    if (options?.stripBom && processedText.charCodeAt(0) === 0xfeff) {
+      processedText = processedText.slice(1);
+      preWarnings.push("Stripped UTF-8 BOM");
+    }
+    if (options?.nfc) {
+      processedText = processedText.normalize("NFC");
+    }
+    if (options?.crlf) {
+      processedText = processedText.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    }
+
+    const t0 = performance.now();
+    let result;
+    if (mode === "k2u") {
+      result = processTextK2U(processedText);
+    } else {
+      result = processTextU2K(processedText);
+    }
+    const timeMs = performance.now() - t0;
+    return {
+      text: result.text,
+      warnings: [...preWarnings, ...(result.warnings || [])],
+      charCount: result.charCount,
+      timeMs
+    };
+  };
+
   const startBatch = async () => {
     if (isProcessing || files.length === 0) return;
     setIsProcessing(true);
@@ -157,35 +190,29 @@ export default function BatchProcessor({
     let completed = 0;
     const batchResults: BatchResult[] = [];
 
-    const CONCURRENCY_LIMIT = 5; // Process up to 5 files simultaneously to reduce network waterfall
-    
-    for (let i = 0; i < files.length; i += CONCURRENCY_LIMIT) {
-      const chunk = files.slice(i, i + CONCURRENCY_LIMIT);
+    // Client-side execution chunking to avoid freezing the UI
+    const CHUNK_SIZE = 1;
+
+    for (let i = 0; i < files.length; i += CHUNK_SIZE) {
+      const chunk = files.slice(i, i + CHUNK_SIZE);
       
-      setCurrentFileName(`⏳ Processing ${i + 1} - ${Math.min(i + CONCURRENCY_LIMIT, files.length)} of ${files.length}...`);
+      setCurrentFileName(`⏳ Processing ${i + 1} - ${Math.min(i + CHUNK_SIZE, files.length)} of ${files.length}...`);
       
-      await Promise.all(chunk.map(async (file) => {
+      // Let React render the progress update
+      await new Promise((r) => setTimeout(r, 0));
+
+      for (const file of chunk) {
         try {
-          const res = await fetch("/api/convert", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: file.text, mode, options }),
+          const data = processFileClient(file.text);
+          batchResults.push({
+            name: file.name,
+            output: data.text,
+            warnings: data.warnings,
+            success: true,
+            charCount: data.charCount,
+            timeMs: data.timeMs,
           });
-          const data = await res.json();
-          
-          if (data.success) {
-            batchResults.push({
-              name: file.name,
-              output: data.text,
-              warnings: data.warnings,
-              success: true,
-              charCount: data.charCount,
-              timeMs: data.timeMs,
-            });
-            addLog(`Converted: ${file.name}`, "success");
-          } else {
-            throw new Error(data.error);
-          }
+          addLog(`Converted: ${file.name}`, "success");
         } catch (err: any) {
           batchResults.push({
             name: file.name,
@@ -197,13 +224,10 @@ export default function BatchProcessor({
           });
           addLog(`Failed: ${file.name} — ${err.message}`, "error");
         }
-      }));
+      }
 
       completed += chunk.length;
       setProgress((completed / files.length) * 100);
-      
-      // small delay to let UI update
-      await new Promise((r) => setTimeout(r, 10));
     }
 
     const totalTimeMs = Math.round(performance.now() - t0);
