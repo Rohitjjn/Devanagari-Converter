@@ -10,9 +10,6 @@
     "clean": "next clean"
   },
   "dependencies": {
-    "@fontsource/cormorant-garamond": "^5.2.11",
-    "@fontsource/inter": "^5.2.8",
-    "@fontsource/jetbrains-mono": "^5.2.8",
     "@google/genai": "^1.17.0",
     "@hookform/resolvers": "^5.2.1",
     "autoprefixer": "^10.4.21",
