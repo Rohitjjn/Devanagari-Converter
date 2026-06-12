@@ -1,9 +1,4 @@
 import type {Metadata} from 'next';
-import '@fontsource/cormorant-garamond/400.css';
-import '@fontsource/cormorant-garamond/500.css';
-import '@fontsource/inter/400.css';
-import '@fontsource/inter/500.css';
-import '@fontsource/jetbrains-mono/400.css';
 import './globals.css'; // Global styles
 
 export const metadata: Metadata = {

@@ -64,7 +64,7 @@ export default function ResultsSection({
     if (!activeResult) return null;
     if (!activeResult.success) {
       return (
-        <div style={{ color: "var(--error)", fontFamily: "var(--font-code)", fontSize: "13px" }}>
+        <div style={{ color: "var(--error)", fontFamily: "'SF Mono', 'JetBrains Mono', monospace", fontSize: "13px" }}>
           Error: {activeResult.warnings[0] || "Unknown error"}
         </div>
       );
@@ -78,25 +78,25 @@ export default function ResultsSection({
           <div key={i} style={{ display: "flex" }}>
             <span
               style={{
-                color: "var(--muted-soft)",
+                color: "#636366",
                 userSelect: "none",
                 marginRight: "16px",
                 textAlign: "right",
-                fontFamily: "var(--font-code)",
-                fontSize: "12px",
+                fontFamily: "'SF Mono','JetBrains Mono',monospace",
+                fontSize: "11px",
                 minWidth: `${maxLineNumWidth + 1}ch`,
-                lineHeight: "1.6",
+                lineHeight: "1.8",
               }}
             >
               {String(i + 1).padStart(maxLineNumWidth, " ")}
             </span>
-            <span style={{ lineHeight: "1.6" }}>
+            <span style={{ lineHeight: "1.8" }}>
               {line || "\u00A0"}
             </span>
           </div>
         ))}
         {activeResult.output.split("\n").length > 500 && (
-          <div style={{ color: "var(--muted-soft)", fontStyle: "italic", marginTop: "8px", paddingTop: "8px", borderTop: "1px solid var(--surface-dark-elevated)" }}>
+          <div style={{ color: "#636366", fontStyle: "italic", marginTop: "8px", paddingTop: "8px", borderTop: "1px solid var(--border)" }}>
             ... {activeResult.output.split("\n").length - 500} more lines (download ZIP for full file)
           </div>
         )}
@@ -110,20 +110,23 @@ export default function ResultsSection({
         <div className="flex items-center gap-3">
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{ background: "var(--primary-disabled)", color: "var(--primary)" }}
+            style={{ background: "var(--accent-light)", color: "var(--accent)" }}
           >
             <TerminalSquare size={18} />
           </div>
           <div>
-            <h2 className="title-md">
+            <h2
+              className="text-base font-semibold tracking-tight"
+              style={{ fontFamily: "'SF Pro Display',Inter,sans-serif" }}
+            >
               Conversion Results
             </h2>
-            <p className="body-sm text-[var(--muted)]">
+            <p className="text-xs text-[var(--text-muted)]">
               Preview and download converted files
             </p>
           </div>
         </div>
-        <button className="button-secondary" onClick={downloadResults}>
+        <button className="btn-secondary" onClick={downloadResults}>
           <Download size={16} />
           Download ZIP
         </button>
@@ -131,64 +134,67 @@ export default function ResultsSection({
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
         <div className="stat-card">
-          <div className="text-2xl font-bold code" style={{ color: "var(--ink)" }}>{results.length}</div>
-          <div className="caption-uppercase text-[var(--muted)] mt-1 font-semibold">Total</div>
+          <div className="text-2xl font-bold font-mono" style={{ color: "var(--text-primary)" }}>{results.length}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] mt-1 font-semibold">Total</div>
         </div>
         <div className="stat-card">
-          <div className="text-2xl font-bold code" style={{ color: "var(--success)" }}>{success}</div>
-          <div className="caption-uppercase text-[var(--muted)] mt-1 font-semibold">Success</div>
+          <div className="text-2xl font-bold font-mono" style={{ color: "var(--success)" }}>{success}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] mt-1 font-semibold">Success</div>
         </div>
         <div className="stat-card">
-          <div className="text-2xl font-bold code" style={{ color: "var(--warning)" }}>{warnings}</div>
-          <div className="caption-uppercase text-[var(--muted)] mt-1 font-semibold">Warnings</div>
+          <div className="text-2xl font-bold font-mono" style={{ color: "var(--warning)" }}>{warnings}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] mt-1 font-semibold">Warnings</div>
         </div>
         <div className="stat-card">
-          <div className="text-2xl font-bold code" style={{ color: "var(--error)" }}>{failed}</div>
-          <div className="caption-uppercase text-[var(--muted)] mt-1 font-semibold">Failed</div>
+          <div className="text-2xl font-bold font-mono" style={{ color: "var(--error)" }}>{failed}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] mt-1 font-semibold">Failed</div>
         </div>
         <div className="stat-card">
-          <div className="text-2xl font-bold code" style={{ color: "var(--primary)" }}>
+          <div className="text-2xl font-bold font-mono" style={{ color: "var(--accent)" }}>
             {timeMs < 1000 ? `${timeMs}ms` : `${(timeMs / 1000).toFixed(1)}s`}
           </div>
-          <div className="caption-uppercase text-[var(--muted)] mt-1 font-semibold">Time</div>
+          <div className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] mt-1 font-semibold">Time</div>
         </div>
       </div>
 
-      <div className="product-mockup-card-dark p-0 overflow-hidden border border-[var(--hairline)]" style={{ borderColor: 'transparent' }}>
-        <div className="border-b border-[var(--surface-dark-elevated)] px-5 py-4 flex items-center gap-2" style={{ background: "rgba(255,255,255,0.02)" }}>
-          <span className="code text-[var(--muted-soft)] text-xs">converted_files/</span>
+      <div className="terminal">
+        <div className="terminal-header">
+          <div className="terminal-dot" style={{ background: "#ff5f56" }}></div>
+          <div className="terminal-dot" style={{ background: "#ffbd2e" }}></div>
+          <div className="terminal-dot" style={{ background: "#27c93f" }}></div>
+          <span className="text-xs text-[var(--text-muted)] font-mono ml-2">converted_files/</span>
         </div>
-        <div className="flex flex-col md:flex-row min-h-[480px] max-h-[700px]">
-          <div className="w-full md:w-[320px] border-b md:border-b-0 md:border-r border-[var(--surface-dark-elevated)] overflow-y-auto" style={{ background: "rgba(255,255,255,0.02)" }}>
+        <div className="terminal-body">
+          <div className="file-tree">
             {results.map((r, i) => (
               <div
                 key={i}
-                className={`p-3.5 px-5 cursor-pointer flex items-center gap-3 text-sm border-l-2 transition-all ${i === activeIndex ? "bg-[var(--surface-dark-elevated)] border-[var(--primary)] text-[var(--primary)]" : "border-transparent text-[var(--muted-soft)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--on-dark)]"}`}
+                className={`file-tree-item batch-animate ${i === activeIndex ? "active" : ""}`}
                 style={{ animationDelay: `${i * 0.02}s` }}
                 onClick={() => setActiveIndex(i)}
               >
-                <span className="text-sm w-5 text-center shrink-0">
+                <span className="status-icon">
                   {r.success ? (r.warnings.length > 0 ? "⚠️" : "✅") : "❌"}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <div className="truncate body-sm">{r.name}</div>
-                  <div className="text-[10px] text-[var(--muted-soft)] font-mono">
+                  <div className="truncate text-sm">{r.name}</div>
+                  <div className="text-[10px] text-[var(--text-muted)]">
                     {r.charCount.toLocaleString()} chars · {r.timeMs}ms
                   </div>
                 </div>
               </div>
             ))}
           </div>
-          <div className="flex-1 flex flex-col overflow-hidden bg-[var(--surface-dark-soft)]">
-            <div className="flex-1 overflow-auto p-6 text-[15px] leading-relaxed text-[#e8e8e8] whitespace-pre-wrap break-words font-deva">
+          <div className="preview-pane">
+            <div className="preview-content font-deva">
               {renderPreviewLines()}
             </div>
             {activeResult && (
-              <div className="border-t border-[var(--surface-dark-elevated)] p-3 px-5 text-xs text-[#8e8e93] flex gap-6 flex-wrap code bg-[rgba(255,255,255,0.02)]">
-                <span style={{ color: "var(--on-dark)" }}>{activeResult.name}</span>
-                <span>{activeResult.charCount.toLocaleString()} chars</span>
-                <span>{activeResult.timeMs}ms</span>
-                <span className={activeResult.warnings.length > 0 || !activeResult.success ? (activeResult.success ? "text-[var(--warning)]" : "text-[var(--error)]") : "text-[var(--success)]"}>
+              <div className="preview-statusbar font-mono">
+                <span style={{ color: "#e8e8e8" }}>{activeResult.name}</span>
+                <span style={{ color: "#8e8e93" }}>{activeResult.charCount.toLocaleString()} chars</span>
+                <span style={{ color: "#8e8e93" }}>{activeResult.timeMs}ms</span>
+                <span className={activeResult.warnings.length > 0 || !activeResult.success ? (activeResult.success ? "text-yellow-500" : "text-red-500") : "text-green-500"}>
                   {activeResult.success ? "Converted" : "Failed"}
                   {activeResult.warnings.length > 0 ? ` · ${activeResult.warnings.length} warning(s)` : ""}
                 </span>
