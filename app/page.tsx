@@ -42,46 +42,46 @@ export default function Page() {
         </section>
 
         <section className="animate-fade-in" style={{ animationDelay: "0.04s" }}>
-          <div className="premium-card p-6">
+          <div className="feature-card">
             <div className="flex flex-wrap items-center gap-6">
-              <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+              <span className="caption-uppercase text-[var(--muted)]">
                 Settings
               </span>
-              <label className="flex items-center gap-3 cursor-pointer text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
+              <label className="flex items-center gap-3 cursor-pointer text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors">
                 <input
                   type="checkbox"
                   className="toggle-switch"
                   checked={options.stripBom}
                   onChange={(e) => setOptions({ ...options, stripBom: e.target.checked })}
                 />
-                <span className="text-xs font-medium">Strip BOM</span>
+                <span className="body-sm font-medium">Strip BOM</span>
               </label>
-              <label className="flex items-center gap-3 cursor-pointer text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
+              <label className="flex items-center gap-3 cursor-pointer text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors">
                 <input
                   type="checkbox"
                   className="toggle-switch"
                   checked={options.nfc}
                   onChange={(e) => setOptions({ ...options, nfc: e.target.checked })}
                 />
-                <span className="text-xs font-medium">NFC Normalize</span>
+                <span className="body-sm font-medium">NFC Normalize</span>
               </label>
-              <label className="flex items-center gap-3 cursor-pointer text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
+              <label className="flex items-center gap-3 cursor-pointer text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors">
                 <input
                   type="checkbox"
                   className="toggle-switch"
                   checked={options.crlf}
                   onChange={(e) => setOptions({ ...options, crlf: e.target.checked })}
                 />
-                <span className="text-xs font-medium">CRLF → LF</span>
+                <span className="body-sm font-medium">CRLF → LF</span>
               </label>
-              <label className="flex items-center gap-3 cursor-pointer text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
+              <label className="flex items-center gap-3 cursor-pointer text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors">
                 <input
                   type="checkbox"
                   className="toggle-switch"
                   checked={options.autoConvert}
                   onChange={(e) => setOptions({ ...options, autoConvert: e.target.checked })}
                 />
-                <span className="text-xs font-medium">Auto-convert</span>
+                <span className="body-sm font-medium">Auto-convert</span>
               </label>
             </div>
           </div>
@@ -98,21 +98,18 @@ export default function Page() {
         )}
 
         <section className="animate-fade-in" style={{ animationDelay: "0.1s" }}>
-          <div
-            className="premium-card p-6 flex items-start gap-4"
-            style={{ background: "var(--accent-light)", borderColor: "var(--accent-glow)" }}
-          >
+          <div className="feature-card flex items-start gap-4" style={{ backgroundColor: 'var(--surface-soft)' }}>
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: "var(--accent-light)", color: "var(--accent)" }}
+              style={{ background: "var(--primary-disabled)", color: "var(--primary)" }}
             >
               <Info size={20} />
             </div>
             <div>
-              <p className="text-sm font-semibold" style={{ color: "var(--accent)" }}>
+              <p className="title-sm" style={{ color: "var(--primary)" }}>
                 Font Requirement
               </p>
-              <p className="text-xs mt-1.5 leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+              <p className="body-sm mt-1.5 leading-relaxed" style={{ color: "var(--muted)" }}>
                 Krutidev 010 output requires the Krutidev 010 font installed to display correctly. Without it, text appears as garbled ASCII. Unicode output uses standard Devanagari fonts.
               </p>
             </div>
@@ -120,10 +117,10 @@ export default function Page() {
         </section>
       </main>
 
-      <footer className="border-t border-[var(--border)] mt-16 py-10" style={{ background: "var(--bg-secondary)" }}>
+      <footer className="footer mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="text-xs text-[var(--text-muted)]">
-            <span className="font-semibold text-[var(--text-primary)]">Devanagari Converter</span> — Forensically accurate batch conversion
+          <div className="body-sm">
+            <span className="font-semibold text-[var(--on-dark)]">Devanagari Converter</span> — Forensically accurate batch conversion
           </div>
         </div>
       </footer>

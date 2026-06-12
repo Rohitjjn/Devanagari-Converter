@@ -109,23 +109,20 @@ export default function LiveConverter({
   };
 
   return (
-    <div className="premium-card p-8 animate-fade-in">
+    <div className="feature-card animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{ background: "var(--accent-light)", color: "var(--accent)" }}
+            style={{ background: "var(--primary-disabled)", color: "var(--primary)" }}
           >
             <RefreshCw size={18} />
           </div>
           <div>
-            <h2
-              className="text-base font-semibold tracking-tight"
-              style={{ fontFamily: "'SF Pro Display',Inter,sans-serif" }}
-            >
+            <h2 className="title-md">
               Live Converter
             </h2>
-            <p className="text-xs text-[var(--text-muted)]">
+            <p className="body-sm text-[var(--muted)]">
               {isK2U
                 ? "Type or paste Krutidev text for instant conversion"
                 : "Type or paste Unicode Devanagari text for instant conversion"}
@@ -133,43 +130,43 @@ export default function LiveConverter({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button className="btn-icon" onClick={clearLive} title="Clear input and output text" aria-label="Clear input and output text">
+          <button className="button-icon-circular" onClick={clearLive} title="Clear input and output text" aria-label="Clear input and output text">
              <Delete size={16} />
           </button>
         </div>
       </div>
 
-      <div className="editor-grid grid grid-cols-1 md:grid-cols-2 gap-5 relative">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 relative">
         {/* Input Area */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between px-1">
-            <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+            <span className="caption-uppercase text-[var(--muted)]">
               {isK2U ? "Krutidev 010" : "Unicode Devanagari"}
             </span>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] text-[var(--text-muted)] font-mono">
+              <span className="code text-[var(--muted-soft)] text-xs">
                 {input.length} chars
               </span>
               <button
-                className="btn-icon"
+                className="button-icon-circular"
                 style={{ width: "28px", height: "28px" }}
                 onClick={() => copyToClipboard(input, true)}
                 title="Copy input"
                 aria-label="Copy input text"
               >
-                {copiedInput ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                {copiedInput ? <Check size={14} className="text-[var(--success)]" /> : <Copy size={14} />}
               </button>
             </div>
           </div>
-          <div className="editor-box">
+          <div>
             <textarea
               ref={inputRef}
-              className="editor-textarea font-deva min-h-[350px] md:min-h-[450px]"
+              className="text-input font-deva min-h-[350px] md:min-h-[450px]"
               placeholder={isK2U ? "Type or paste text here..." : "यहाँ यूनिकोड हिंदी टाइप करें..."}
               spellCheck="false"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              style={{ whiteSpace: "pre-wrap", overflowX: "auto" }}
+              style={{ whiteSpace: "pre-wrap", overflowX: "auto", resize: "none" }}
             />
           </div>
         </div>
@@ -177,10 +174,10 @@ export default function LiveConverter({
         {/* Swap Button */}
         <div className="hidden md:flex flex-col items-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-0">
           <button
-            className={`swap-btn w-11 h-11 rounded-full flex items-center justify-center shadow-lg border border-[var(--border)] overflow-visible ${
+            className={`swap-btn w-11 h-11 rounded-full flex items-center justify-center shadow-lg border border-[var(--hairline)] overflow-visible ${
               isRotated ? "rotated" : ""
             }`}
-            style={{ background: "var(--bg-card-solid)", color: "var(--accent)" }}
+            style={{ background: "var(--canvas)", color: "var(--primary)" }}
             onClick={handleSwap}
             title="Swap conversion direction"
             aria-label="Swap conversion direction"
@@ -192,33 +189,33 @@ export default function LiveConverter({
         {/* Output Area */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between px-1">
-            <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+            <span className="caption-uppercase text-[var(--muted)]">
               {isK2U ? "Unicode Devanagari" : "Krutidev 010"}
             </span>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] text-[var(--text-muted)] font-mono">
+              <span className="code text-[var(--muted-soft)] text-xs">
                 {output.length} chars
               </span>
               <button
-                className="btn-icon"
+                className="button-icon-circular"
                 style={{ width: "28px", height: "28px" }}
                 onClick={() => copyToClipboard(output, false)}
                 title="Copy output"
                 aria-label="Copy output text"
               >
-                {copiedOutput ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                {copiedOutput ? <Check size={14} className="text-[var(--success)]" /> : <Copy size={14} />}
               </button>
             </div>
           </div>
-          <div className="editor-box">
+          <div>
             <textarea
               ref={outputRef}
-              className="editor-textarea font-deva min-h-[350px] md:min-h-[450px]"
+              className="text-input font-deva min-h-[350px] md:min-h-[450px]"
               readOnly
               placeholder="Converted output will appear here..."
               spellCheck="false"
               value={output}
-              style={{ whiteSpace: "pre-wrap", overflowX: "auto" }}
+              style={{ whiteSpace: "pre-wrap", overflowX: "auto", resize: "none", backgroundColor: "var(--surface-soft)" }}
             />
           </div>
         </div>
