@@ -239,7 +239,7 @@ export default function BatchProcessor({
 
   return (
     <div className="animate-fade-in" style={{ animationDelay: "0.08s" }}>
-      <div className="premium-card p-8">
+      <div className="feature-card">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div
@@ -250,12 +250,12 @@ export default function BatchProcessor({
             </div>
             <div>
               <h2
-                className="text-base font-semibold tracking-tight"
-                style={{ fontFamily: "'SF Pro Display',Inter,sans-serif" }}
+                className="title-md"
+
               >
                 Batch Processing
               </h2>
-              <p className="text-xs text-[var(--text-muted)]">
+              <p className="body-sm text-[var(--muted)]">
                 Drop archives or text files for bulk conversion
               </p>
             </div>
@@ -330,7 +330,7 @@ export default function BatchProcessor({
                 Selected Files (<span>{files.length}</span>)
               </span>
               <button
-                className="text-xs text-[var(--text-muted)] hover:text-[var(--error)] transition-colors flex items-center gap-1 font-medium"
+                className="body-sm text-[var(--muted)] hover:text-[var(--error)] transition-colors flex items-center gap-1 font-medium"
                 onClick={clearFiles}
                 aria-label="Clear all selected files"
               >
@@ -358,7 +358,7 @@ export default function BatchProcessor({
             </div>
 
             <div className="flex flex-wrap gap-3 mt-5">
-              <button className="btn-primary" onClick={startBatch} disabled={isProcessing || files.length === 0}>
+              <button className="button-primary" onClick={startBatch} disabled={isProcessing || files.length === 0}>
                 {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <FileType size={16} />}
                 {isProcessing ? "Converting..." : "Convert All"}
               </button>
@@ -368,7 +368,7 @@ export default function BatchProcessor({
       </div>
 
        {isProcessing && (
-        <div className="premium-card p-8 mt-6">
+        <div className="feature-card mt-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="relative">
@@ -376,8 +376,8 @@ export default function BatchProcessor({
                 <div className="pulse-ring" style={{ background: "var(--accent)" }}></div>
               </div>
               <span
-                className="text-sm font-semibold"
-                style={{ fontFamily: "'SF Pro Display',Inter,sans-serif" }}
+                className="title-sm"
+
               >
                 Converting batch...
               </span>
@@ -389,7 +389,7 @@ export default function BatchProcessor({
           <div className="progress-track mb-4">
             <div className="progress-fill" style={{ width: `${progress}%` }}></div>
           </div>
-          <div className="text-xs text-[var(--text-muted)] mb-4 font-mono">{currentFileName}</div>
+          <div className="body-sm text-[var(--muted)] mb-4 font-mono">{currentFileName}</div>
           <div className="status-log">
              {logs.map((log, i) => (
                <div key={i} className="log-entry">
