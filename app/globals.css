@@ -104,7 +104,10 @@
     box-shadow: 0 0 0 4px var(--accent-glow);
   }
   .editor-textarea {
-    flex: 1;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    width: 100%;
     padding: 20px;
     border: none;
     background: transparent;

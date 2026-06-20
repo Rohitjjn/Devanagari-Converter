@@ -111,6 +111,7 @@ const CONJUNCT_MAP = [
   ['\u0922\u094D\u0930','<ªª'],['\u091B\u094D\u0930','Nª'],
   ['\u0915\u0943','Ñ'],
   ['\u0938\u094D\u0930','lz'],
+  ['\u094D\u0930', 'z'],
 ].sort((a,b)=>b[0].length-a[0].length);
 
 const HALF_FORM_MAP = new Map([
@@ -219,8 +220,8 @@ function postProcess(text: string) {
 
 function processDevanagariSegment(text: string) {
   text = reorderIMatra(text);
-  text = applyConjuncts(text);
   text = reorderReph(text);
+  text = applyConjuncts(text);
   text = applyHalfForms(text);
   const result: string[] = [];
   const segmentWarnings: string[] = [];
