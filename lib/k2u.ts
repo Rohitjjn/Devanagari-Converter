@@ -233,11 +233,7 @@ export function convertKrutidevToUnicode(krutidevText: string) {
 
   for (const [pattern, replacement] of REPLACEMENT_MAP) {
     if (pattern.length === 0) continue;
-    let idx = text.indexOf(pattern);
-    while (idx !== -1) {
-      text = text.substring(0, idx) + replacement + text.substring(idx + pattern.length);
-      idx = text.indexOf(pattern, idx + replacement.length);
-    }
+    text = text.split(pattern).join(replacement);
   }
 
   const MATRA_SET = new Set('ािीुूृेैोौंँःॅॉ\u0902\u0901\u0903\u093E\u093F\u0940\u0941\u0942\u0943\u0947\u0948\u094B\u094C\u0945\u0949'.split(''));
@@ -298,7 +294,7 @@ export function convertKrutidevToUnicode(krutidevText: string) {
           + cluster
           + text.substring(posZ + 1); 
 
-    posZ = text.indexOf('Z');
+    posZ = text.indexOf('Z', clusterStart + 2 + cluster.length);
   }
 
   const target = '\u093F\u094D';

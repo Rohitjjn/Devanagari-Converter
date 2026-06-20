@@ -65,7 +65,13 @@ export default function BatchProcessor({
       ) {
          try {
            const archive = await Archive.open(file);
-           const extracted = await archive.extractFiles();
+           let extractCount = 0;
+           const extracted = await archive.extractFiles((entry: any) => {
+             extractCount++;
+             if (extractCount % 5 === 0) {
+               setCurrentFileName(`Extracting: found ${extractCount} objects in ${file.name}...`);
+             }
+           });
            
            const processExtracted = async (obj: any, pathPrefix = "") => {
              for (const [key, val] of Object.entries(obj)) {
@@ -76,13 +82,30 @@ export default function BatchProcessor({
                if (typeof val === "object" && val !== null && "size" in val) {
                  if (currentPath.match(/\.(txt|csv|md|json|xml|html|htm|srt|vtt|rtf|log|tsv|js|css)$/i)) {
                    let text = "";
-                   if (typeof (val as any).text === "function") {
-                     text = await (val as any).text();
-                   } else if ((val as any).fileData) {
-                     text = new TextDecoder().decode((val as any).fileData);
-                   } else if ((val as any).arrayBuffer) {
-                     const buf = await (val as any).arrayBuffer();
-                     text = new TextDecoder().decode(buf);
+                   let buf: ArrayBuffer | Uint8Array;
+                   
+                   try {
+                     if ((val as any).arrayBuffer && typeof (val as any).arrayBuffer === "function") {
+                       buf = await (val as any).arrayBuffer();
+                     } else if ((val as any).fileData) {
+                       buf = (val as any).fileData;
+                     } else {
+                       throw new Error("Cannot read file buffer");
+                     }
+
+                     // For Krutidev to Unicode, the source text is Krutidev (ANSI/Windows-1252).
+                     // standard utf-8 decoding may scramble characters like Â, Æ, etc.
+                     if (mode === "k2u") {
+                       text = new TextDecoder("windows-1252").decode(buf);
+                     } else {
+                       // Unicode to Krutidev (source is Unicode, so usually utf-8)
+                       text = new TextDecoder("utf-8").decode(buf);
+                     }
+                   } catch(readErr) {
+                       console.error("Fallback to basic text(): ", readErr);
+                       if (typeof (val as any).text === "function") {
+                          text = await (val as any).text();
+                       }
                    }
                    entries.push({ name: currentPath, text, size: text.length });
                  }

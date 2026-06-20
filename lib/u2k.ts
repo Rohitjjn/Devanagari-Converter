@@ -1,6 +1,6 @@
 const DEVA_RANGE = /[\u0900-\u097F]/;
 const IMATRA_RE = /([\u0915-\u0939](?:्[\u0915-\u0939])*)ि/g;
-const REPH_RE = /र्([\u0915-\u0939](?:्[\u0915-\u0939])*)/g;
+const REPH_RE = /र्([\u0915-\u0939](?:्[\u0915-\u0939])*)([\u093E\u0940\u0947\u0948\u094B\u094C\u0945\u0949\u0902\u0901\u0903]*)/g;
 
 const KRU_MAP = new Map([
   ['^','\u2018'],['*','\u2019'],['Þ','\u201C'],['ß','\u201D'],
@@ -160,15 +160,14 @@ function splitSegments(text: string) {
 }
 
 function applyConjuncts(text: string) {
-  for (const [uni,kru] of CONJUNCT_MAP) {
-    let i = text.indexOf(uni);
-    while (i!==-1) { text=text.slice(0,i)+kru+text.slice(i+uni.length); i=text.indexOf(uni,i+kru.length); }
+  for (const [uni, kru] of CONJUNCT_MAP) {
+    text = text.split(uni).join(kru);
   }
   return text;
 }
 
 function reorderReph(text: string) {
-  return text.replace(REPH_RE, (m,cluster)=>cluster+'\x02');
+  return text.replace(REPH_RE, (m, cluster, matras) => cluster + (matras || '') + '\x02');
 }
 
 function reorderIMatra(text: string) {
@@ -176,9 +175,8 @@ function reorderIMatra(text: string) {
 }
 
 function applyHalfForms(text: string) {
-  for (const [uni,kru] of HALF_FORM_MAP) {
-    let i = text.indexOf(uni);
-    while (i!==-1) { text=text.slice(0,i)+kru+text.slice(i+uni.length); i=text.indexOf(uni,i+kru.length); }
+  for (const [uni, kru] of HALF_FORM_MAP) {
+    text = text.split(uni).join(kru);
   }
   return text;
 }
@@ -189,6 +187,7 @@ function mapDevanagariChars(chars: string[]) {
     const ch = chars[i];
     if (ch==='\x01') { out.push('f'); continue; }
     if (ch==='\x02') { out.push('Z'); continue; }
+    if (ch==='\u093F') { out.push('f'); continue; }
     if (UNICODE_TO_KRU.has(ch)) { out.push(UNICODE_TO_KRU.get(ch)!); continue; }
     if (DEVA_RANGE.test(ch)) {
       const cp = 'U+'+ch.codePointAt(0)!.toString(16).toUpperCase().padStart(4,'0');
@@ -202,13 +201,6 @@ function mapDevanagariChars(chars: string[]) {
 
 function postProcess(text: string) {
   const warnings: string[] = [];
-  for (let i = 0; i < text.length; i++) {
-    const cp = text.codePointAt(i)!;
-    if (cp > 255 || (cp < 32 && cp !== 10 && cp !== 13)) {
-      const hex = 'U+' + cp.toString(16).toUpperCase().padStart(4, '0');
-      warnings.push(`Non-Windows-1252 character ${hex} at position ${i}`);
-    }
-  }
   const devaSurvivors: {char: string, hex: string}[] = [];
   for (const ch of text) {
     const cp = ch.codePointAt(0)!;
