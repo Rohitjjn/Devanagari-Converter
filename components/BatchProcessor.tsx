@@ -56,7 +56,8 @@ export default function BatchProcessor({
         const zip = await JSZip.loadAsync(buffer);
         for (const [path, entry] of Object.entries(zip.files)) {
           if (!entry.dir && path.match(/\.(txt|csv|md|json|xml|html|htm|srt|vtt|rtf|log|tsv|js|css)$/i)) {
-            const text = await entry.async("string");
+            const buf = await entry.async("uint8array");
+            const text = new TextDecoder(mode === "k2u" ? "windows-1252" : "utf-8").decode(buf);
             entries.push({ name: path, text, size: text.length });
           }
         }
@@ -66,12 +67,20 @@ export default function BatchProcessor({
          try {
            const archive = await Archive.open(file);
            let extractCount = 0;
-           const extracted = await archive.extractFiles((entry: any) => {
+           
+           // Wrap extractFiles in a Promise with a timeout
+           const extractPromise = archive.extractFiles((entry: any) => {
              extractCount++;
              if (extractCount % 5 === 0) {
                setCurrentFileName(`Extracting: found ${extractCount} objects in ${file.name}...`);
              }
            });
+           
+           const timeoutPromise = new Promise((_, reject) => {
+             setTimeout(() => reject(new Error("Extraction timed out. If this is a modern RAR (RAR5) file, it might not be supported. Please upload as a ZIP file instead.")), 15000);
+           });
+           
+           const extracted = await Promise.race([extractPromise, timeoutPromise]);
            
            const processExtracted = async (obj: any, pathPrefix = "") => {
              for (const [key, val] of Object.entries(obj)) {
@@ -125,7 +134,7 @@ export default function BatchProcessor({
         const text = await new Promise<string>((resolve, reject) => {
           reader.onload = () => resolve(reader.result as string);
           reader.onerror = () => reject(new Error("Failed to read file"));
-          reader.readAsText(file, "UTF-8");
+          reader.readAsText(file, mode === "k2u" ? "windows-1252" : "UTF-8");
         });
         entries.push({ name: file.name, text, size: text.length });
       }
@@ -316,7 +325,7 @@ export default function BatchProcessor({
               {isExtracting ? "Extracting files..." : "Drop files here to convert"}
             </p>
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              Supports .txt, .csv, .json, .md, .html, .xml and archives (.zip, .rar, .7z, .tar, .gz)
+              Supports .txt, .csv, .json, .md, .html, .xml and archives (.zip, .rar, .7z, .tar, .gz) — ZIP is highly recommended for best performance.
             </p>
             <div className="flex flex-wrap justify-center gap-2 mt-4">
               {['TEXT', 'CSV', 'JSON', 'ARCHIVE'].map(ext => (

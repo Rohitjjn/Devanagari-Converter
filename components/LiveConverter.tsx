@@ -161,10 +161,10 @@ export default function LiveConverter({
               </button>
             </div>
           </div>
-          <div className="editor-box">
+          <div className="editor-box h-[350px] md:h-[450px]">
             <textarea
               ref={inputRef}
-              className="editor-textarea font-deva min-h-[350px] md:min-h-[450px]"
+              className="editor-textarea font-deva"
               placeholder={isK2U ? "Type or paste text here..." : "यहाँ यूनिकोड हिंदी टाइप करें..."}
               spellCheck="false"
               value={input}
@@ -210,10 +210,10 @@ export default function LiveConverter({
               </button>
             </div>
           </div>
-          <div className="editor-box">
+          <div className="editor-box h-[350px] md:h-[450px]">
             <textarea
               ref={outputRef}
-              className="editor-textarea font-deva min-h-[350px] md:min-h-[450px]"
+              className="editor-textarea font-deva"
               readOnly
               placeholder="Converted output will appear here..."
               spellCheck="false"

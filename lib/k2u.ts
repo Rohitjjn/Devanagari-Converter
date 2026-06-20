@@ -319,8 +319,6 @@ export function convertKrutidevToUnicode(krutidevText: string) {
   text = text.replace(/\u094D\u094D\u0930/g, '\u094D\u0930');
   text = text.replace(/\u094D\u0930\u094D/g, '\u0930\u094D');
   text = text.replace(/\u094D\u094D/g, '\u094D');
-  text = text.replace(/\u094D /g, ' ');
-  text = text.replace(/\u094D\n/g, '\n');
 
   const matraChars = '\u0902\u0901\u0903\u093E\u093F\u0940\u0941\u0942\u0943\u0947\u0948\u094B\u094C\u0945\u0949';
   for (const matra of matraChars) {

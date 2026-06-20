@@ -58,10 +58,6 @@
     min-height: 100vh;
     transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
   ::selection { background: var(--accent); color: white; }
 }
 
@@ -91,6 +87,7 @@
 
   .editor-box {
     display: flex;
+    flex-direction: column;
     font-family: 'SF Mono', 'JetBrains Mono', monospace;
     font-size: 14px;
     line-height: 1.8;
@@ -101,7 +98,6 @@
     border: 1px solid var(--border);
     overflow: hidden;
     transition: border-color 0.2s, box-shadow 0.2s;
-    height: 400px;
   }
   .editor-box:focus-within {
     border-color: var(--accent);
@@ -533,5 +529,4 @@
   .terminal-body { flex-direction: column; }
   .file-tree { width: 100%; border-right: none; border-bottom: 1px solid var(--border); max-height: 280px; }
   .mode-toggle button { padding: 8px 16px; font-size: 13px; }
-  .editor-box { height: 300px; }
 }
