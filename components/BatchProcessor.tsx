@@ -12,6 +12,42 @@ Archive.init({
     workerUrl: "/worker-bundle.js",
 });
 
+function autoDecodeBuffer(buffer: ArrayBuffer | Uint8Array, fallbackEncoding: "utf-8" | "windows-1252" = "utf-8"): string {
+  const bytes = new Uint8Array(buffer);
+  
+  if (bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
+    return new TextDecoder("utf-8").decode(bytes); 
+  }
+  if (bytes.length >= 2 && bytes[0] === 0xFF && bytes[1] === 0xFE) {
+    return new TextDecoder("utf-16le").decode(bytes);
+  }
+  if (bytes.length >= 2 && bytes[0] === 0xFE && bytes[1] === 0xFF) {
+    return new TextDecoder("utf-16be").decode(bytes);
+  }
+  
+  let nullsInOdds = 0;
+  let nullsInEvens = 0;
+  let devanagariInOdds = 0;
+  let devanagariInEvens = 0;
+
+  const checkLen = Math.min(bytes.length, 1000);
+  for (let i = 0; i < checkLen; i += 2) {
+    if (bytes[i] === 0) nullsInEvens++;
+    if (i + 1 < checkLen && bytes[i + 1] === 0) nullsInOdds++;
+    if (bytes[i] === 0x09) devanagariInEvens++;
+    if (i + 1 < checkLen && bytes[i + 1] === 0x09) devanagariInOdds++;
+  }
+  
+  if ((nullsInOdds + devanagariInOdds) > checkLen / 4 && (nullsInOdds + devanagariInOdds) > (nullsInEvens + devanagariInEvens) * 2) {
+    return new TextDecoder("utf-16le").decode(bytes);
+  }
+  if ((nullsInEvens + devanagariInEvens) > checkLen / 4 && (nullsInEvens + devanagariInEvens) > (nullsInOdds + devanagariInOdds) * 2) {
+    return new TextDecoder("utf-16be").decode(bytes);
+  }
+
+  return new TextDecoder(fallbackEncoding).decode(bytes);
+}
+
 export interface BatchResult {
   name: string;
   output: string;
@@ -57,7 +93,7 @@ export default function BatchProcessor({
         for (const [path, entry] of Object.entries(zip.files)) {
           if (!entry.dir && path.match(/\.(txt|csv|md|json|xml|html|htm|srt|vtt|rtf|log|tsv|js|css)$/i)) {
             const buf = await entry.async("uint8array");
-            const text = new TextDecoder(mode === "k2u" ? "windows-1252" : "utf-8").decode(buf);
+            const text = autoDecodeBuffer(buf, mode === "k2u" ? "windows-1252" : "utf-8");
             entries.push({ name: path, text, size: text.length });
           }
         }
@@ -103,13 +139,7 @@ export default function BatchProcessor({
                      }
 
                      // For Krutidev to Unicode, the source text is Krutidev (ANSI/Windows-1252).
-                     // standard utf-8 decoding may scramble characters like Â, Æ, etc.
-                     if (mode === "k2u") {
-                       text = new TextDecoder("windows-1252").decode(buf);
-                     } else {
-                       // Unicode to Krutidev (source is Unicode, so usually utf-8)
-                       text = new TextDecoder("utf-8").decode(buf);
-                     }
+                     text = autoDecodeBuffer(buf, mode === "k2u" ? "windows-1252" : "utf-8");
                    } catch(readErr) {
                        console.error("Fallback to basic text(): ", readErr);
                        if (typeof (val as any).text === "function") {
@@ -132,9 +162,9 @@ export default function BatchProcessor({
       } else if (name.match(/\.(txt|csv|md|json|xml|html|htm|srt|vtt|rtf|log|tsv|js|css)$/i)) {
         const reader = new FileReader();
         const text = await new Promise<string>((resolve, reject) => {
-          reader.onload = () => resolve(reader.result as string);
+          reader.onload = () => resolve(autoDecodeBuffer(reader.result as ArrayBuffer, mode === "k2u" ? "windows-1252" : "utf-8"));
           reader.onerror = () => reject(new Error("Failed to read file"));
-          reader.readAsText(file, mode === "k2u" ? "windows-1252" : "UTF-8");
+          reader.readAsArrayBuffer(file);
         });
         entries.push({ name: file.name, text, size: text.length });
       }
