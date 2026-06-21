@@ -29,8 +29,9 @@ function autoDecodeBuffer(buffer: ArrayBuffer | Uint8Array, fallbackEncoding: "u
   let nullsInEvens = 0;
   let devanagariInOdds = 0;
   let devanagariInEvens = 0;
+  let utf8DevanagariCount = 0;
 
-  const checkLen = Math.min(bytes.length, 1000);
+  const checkLen = Math.min(bytes.length, 5000);
   for (let i = 0; i < checkLen; i += 2) {
     if (bytes[i] === 0) nullsInEvens++;
     if (i + 1 < checkLen && bytes[i + 1] === 0) nullsInOdds++;
@@ -38,6 +39,14 @@ function autoDecodeBuffer(buffer: ArrayBuffer | Uint8Array, fallbackEncoding: "u
     if (i + 1 < checkLen && bytes[i + 1] === 0x09) devanagariInOdds++;
   }
   
+  for(let i = 0; i < checkLen - 2; i++) {
+    if (bytes[i] === 0xE0 && (bytes[i+1] === 0xA4 || bytes[i+1] === 0xA5)) {
+      if (bytes[i+2] >= 0x80 && bytes[i+2] <= 0xBF) {
+        utf8DevanagariCount++;
+      }
+    }
+  }
+
   if ((nullsInOdds + devanagariInOdds) > checkLen / 4 && (nullsInOdds + devanagariInOdds) > (nullsInEvens + devanagariInEvens) * 2) {
     return new TextDecoder("utf-16le").decode(bytes);
   }
@@ -45,7 +54,15 @@ function autoDecodeBuffer(buffer: ArrayBuffer | Uint8Array, fallbackEncoding: "u
     return new TextDecoder("utf-16be").decode(bytes);
   }
 
-  return new TextDecoder(fallbackEncoding).decode(bytes);
+  if (utf8DevanagariCount > 2) {
+    return new TextDecoder("utf-8").decode(bytes);
+  }
+
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch (e) {
+    return new TextDecoder(fallbackEncoding).decode(bytes);
+  }
 }
 
 export interface BatchResult {
