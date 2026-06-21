@@ -32,7 +32,7 @@ export function convertKrutidevToUnicode(krutidevText: string) {
     ['t+',     '\u091C\u093C'],      
     ['M+',     '\u095C'],  
     ['<+',     '\u095D'],  
-    ['Q+',     '\u095B'],  
+    ['Q+',     '\u095E'],  
     [';+',     '\u095F'],  
     ['j+',     '\u0931'],  
     ['u+',     '\u0929'],  
@@ -142,30 +142,30 @@ export function convertKrutidevToUnicode(krutidevText: string) {
     ['o', '\u0935'],  
     ['l', '\u0938'],  
     ['g', '\u0939'],  
-    ['D', '\u0915\u094D'],  
-    ['[', '\u0916\u094D'],  
-    ['X', '\u0917\u094D'],  
-    ['?', '\u0918\u094D'],  
-    ['P', '\u091A\u094D'],  
-    ['T', '\u091C\u094D'],  
-    ['\u00F7', '\u091D\u094D'], 
-    ['R', '\u0924\u094D'],  
-    ['F', '\u0925\u094D'],  
+    ['D', '\u0915\u094D\u200D'],  
+    ['[', '\u0916\u094D\u200D'],  
+    ['X', '\u0917\u094D\u200D'],  
+    ['?', '\u0918\u094D\u200D'],  
+    ['P', '\u091A\u094D\u200D'],  
+    ['T', '\u091C\u094D\u200D'],  
+    ['\u00F7', '\u091D\u094D\u200D'], 
+    ['R', '\u0924\u094D\u200D'],  
+    ['F', '\u0925\u094D\u200D'],  
     [')', '\u0926\u094D\u0927'], 
-    ['/', '\u0927\u094D'],  
-    ['\u00CB', '\u0927\u094D'], 
-    ['\u00E8', '\u0927\u094D'], 
-    ['U', '\u0928\u094D'],  
-    ['I', '\u092A\u094D'],  
-    ['C', '\u092C\u094D'],  
-    ['H', '\u092D\u094D'],  
-    ['E', '\u092E\u094D'],  
-    ['\u00B8', '\u092F\u094D'], 
-    ['Y', '\u0932\u094D'],  
-    ['O', '\u0935\u094D'],  
-    ["'", '\u0936\u094D'],  
-    ['"', '\u0937\u094D'],  
-    ['L', '\u0938\u094D'],  
+    ['/', '\u0927\u094D\u200D'],  
+    ['\u00CB', '\u0927\u094D\u200D'], 
+    ['\u00E8', '\u0927\u094D\u200D'], 
+    ['U', '\u0928\u094D\u200D'],  
+    ['I', '\u092A\u094D\u200D'],  
+    ['C', '\u092C\u094D\u200D'],  
+    ['H', '\u092D\u094D\u200D'],  
+    ['E', '\u092E\u094D\u200D'],  
+    ['\u00B8', '\u092F\u094D\u200D'], 
+    ['Y', '\u0932\u094D\u200D'],  
+    ['O', '\u0935\u094D\u200D'],  
+    ["'", '\u0936\u094D\u200D'],  
+    ['"', '\u0937\u094D\u200D'],  
+    ['L', '\u0938\u094D\u200D'],  
     ['\u00CC', '\u0926\u094D\u0926'],   
     ['\u00CD', '\u091F\u094D\u091F'],   
     ['\u00CE', '\u091F\u094D\u0920'],   
@@ -240,36 +240,32 @@ export function convertKrutidevToUnicode(krutidevText: string) {
 
   text = text.replace(/\u00B1/g, 'Z\u0902');
   text = text.replace(/\u00C6/g, '\u0930\u094Df');
-
-  let posF = text.indexOf('f');
-  while (posF !== -1) {
-    const nextChar = text.charAt(posF + 1);
-    if (nextChar) {
-      const replacement = nextChar + '\u093F'; 
-      text = text.substring(0, posF) + replacement + text.substring(posF + 2);
-      posF = text.indexOf('f', posF + replacement.length);
-    } else {
-      text = text.substring(0, posF) + '\u093F';
-      warnings.push('Dangling f-matra at end of text');
-      break;
-    }
-  }
+  text = text.replace(/f\u0902/g, 'fa');
 
   text = text.replace(/\u00C7/g, 'fa');  
   text = text.replace(/\u00AF/g, 'fa');  
   text = text.replace(/\u00C9/g, '\u0930\u094Dfa'); 
 
-  let posFA = text.indexOf('fa');
-  while (posFA !== -1) {
-    const nextChar = text.charAt(posFA + 2);
-    if (nextChar) {
-      const replacement = nextChar + '\u093F\u0902'; 
-      text = text.substring(0, posFA) + replacement + text.substring(posFA + 3);
-      posFA = text.indexOf('fa', posFA + replacement.length);
-    } else {
-      text = text.substring(0, posFA) + '\u093F\u0902';
-      break;
-    }
+  const clusterRegexSource = '((?:[\\u0915-\\u0939\\u0958-\\u095F]\\u093C?\\u094D[\\u200C\\u200D]?)*[\\u0915-\\u0939\\u0958-\\u095F]\\u093C?)';
+  
+  text = text.replace(/fa/g, 'fa'); // Do nothing, just checking. Wait, we have fa mapped already
+  
+  // Replace fa (i-matra + anusvara)
+  const faRegex = new RegExp('fa' + clusterRegexSource, 'g');
+  text = text.replace(faRegex, '$1\u093F\u0902');
+  
+  // Replace f (i-matra)
+  const fRegex = new RegExp('f' + clusterRegexSource, 'g');
+  text = text.replace(fRegex, '$1\u093F');
+
+  // Handle any dangling f or fa
+  if (text.includes('fa')) {
+    warnings.push('Dangling fa-matra');
+    text = text.replace(/fa/g, '\u093F\u0902');
+  }
+  if (text.includes('f')) {
+    warnings.push('Dangling f-matra');
+    text = text.replace(/f/g, '\u093F');
   }
 
   text = text.replace(/\u00CA/g, '\u0940Z');
@@ -283,8 +279,15 @@ export function convertKrutidevToUnicode(krutidevText: string) {
     }
 
     let clusterStart = posZ - 1;
-    while (clusterStart > 0 && MATRA_SET.has(text.charAt(clusterStart))) {
-      clusterStart--;
+    while (clusterStart > 0) {
+      const char = text.charAt(clusterStart);
+      if (MATRA_SET.has(char) || char === '\u093C') {
+        clusterStart--;
+      } else if (clusterStart > 1 && text.charAt(clusterStart - 1) === '\u094D') {
+        clusterStart -= 2; // Skip the halant and the consonant before it
+      } else {
+        break;
+      }
     }
 
     const cluster = text.substring(clusterStart, posZ);
@@ -314,6 +317,7 @@ export function convertKrutidevToUnicode(krutidevText: string) {
   text = text.replace(/\u094DZ/g, 'Z');
   
   text = text.replace(/\u093F\u093E/g, '\u0940');
+  text = text.replace(/\u093F\u093C/g, '\u093C\u093F');
   text = text.replace(/\u0941\u0942/g, '\u0942');
   text = text.replace(/\u0947\u0948/g, '\u0948');
   text = text.replace(/\u094D\u094D\u0930/g, '\u094D\u0930');

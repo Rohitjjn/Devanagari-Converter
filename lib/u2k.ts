@@ -1,6 +1,6 @@
-const DEVA_RANGE = /[\u0900-\u097F]/;
-const IMATRA_RE = /([\u0915-\u0939](?:्[\u0915-\u0939])*)ि/g;
-const REPH_RE = /र्([\u0915-\u0939](?:्[\u0915-\u0939])*)([\u093E\u0940\u0947\u0948\u094B\u094C\u0945\u0949\u0902\u0901\u0903]*)/g;
+const DEVA_RANGE = /[\u0900-\u097F\u200C\u200D]/;
+const IMATRA_RE = /([\u0915-\u0939\u0958-\u095F]\u093C?(?:्[\u0915-\u0939\u0958-\u095F]\u093C?)*)ि/g;
+const REPH_RE = /र्([\u0915-\u0939\u0958-\u095F]\u093C?(?:्[\u0915-\u0939\u0958-\u095F]\u093C?)*)([\u093E\u0940\u0947\u0948\u094B\u094C\u0945\u0949\u0902\u0901\u0903]*)/g;
 
 const KRU_MAP = new Map([
   ['^','\u2018'],['*','\u2019'],['Þ','\u201C'],['ß','\u201D'],
@@ -9,12 +9,11 @@ const KRU_MAP = new Map([
   ['†','\u096A'],['‡','\u096B'],['ˆ','\u096C'],['‰','\u096D'],
   ['Š','\u096E'],['‹','\u096F'],
   ['¶+','\u0958\u094D'],['d+','\u0958'],['[+k','\u0959'],['[+','\u0959\u094D'],
-  ['x+','\u095A'],['T+','\u091C\u093C\u094D'],['t+','\u091C\u093C'],
-  ['M+','\u095C'],['<+','\u095D'],['Q+','\u095B'],[';+','\u095F'],
+  ['x+','\u095A'],['T+','\u091C\u093C\u094D'],['T+','\u095B\u094D'],['t+','\u091C\u093C'],['t+','\u095B'],
+  ['M+','\u095C'],['<+','\u095D'],['Q+','\u095E'],[';+','\u095F'],
   ['j+','\u0931'],['u+','\u0929'],
   ['Ùk','\u0924\u094D\u0924'],['Ù','\u0924\u094D\u0924\u094D'],
   ['ä','\u0915\u094D\u0924'],['–','\u0926\u0943'],['—','\u0915\u0943'],
-  ['é','\u0928\u094D\u0928'],['™','\u0928\u094D\u0928\u094D'],
   ['=kk','=k'],['f=k','f='],
   ['à','\u0939\u094D\u0928'],['á','\u0939\u094D\u092F'],['â','\u0939\u0943'],
   ['ã','\u0939\u094D\u092E'],['ºz','\u0939\u094D\u0930'],['º','\u0939\u094D'],
@@ -89,7 +88,7 @@ for (const [kru, uni] of KRU_MAP) {
 
 const CONJUNCT_MAP = [
   ['\u0930\u094D\u0926\u094D\u0930','nzZ'],['\u0924\u094D\u0924\u094D','Ù'],
-  ['\u0928\u094D\u0928\u094D','™'],['\u0915\u094D\u0937\u094D','{'],
+  ['\u0915\u094D\u0937\u094D','{'],
   ['\u0924\u094D\u0930\u094D','«'],['\u0915\u094D\u0937','{k'],
   ['\u0924\u094D\u0930','='],['\u091C\u094D\u091E','K'],
   ['\u0936\u094D\u0930','J'],['\u092A\u094D\u0930','iz'],
@@ -99,14 +98,12 @@ const CONJUNCT_MAP = [
   ['\u0921\u094D\u0922','\u00D4'],['\u0926\u094D\u0926','\u00CC'],
   ['\u0926\u094D\u0930','æ'],['\u0926\u094D\u092F','|'],
   ['\u0917\u094D\u0930','xz'],['\u0924\u094D\u0924','Ùk'],
-  ['\u0928\u094D\u0928','é'],['\u0939\u094D\u0928','à'],
+  ['\u0939\u094D\u0928','à'],
   ['\u0939\u094D\u092F','á'],['\u0939\u094D\u092E','ã'],
   ['\u0939\u094D\u0930','ºz'],['\u0939\u094D','º'],
   ['\u0915\u094D\u0924','ä'],['\u092B\u094D\u0930','Ý'],
   ['\u0915\u094D\u0915','\u00F4'],['\u0930\u0941','#'],
-  ['\u0930\u0942',':'],['\u091B\u094D\u092F','Nî'],
-  ['\u091F\u094D\u092F','Vî'],['\u0920\u094D\u092F','Bî'],
-  ['\u0921\u094D\u092F','Mî'],['\u0922\u094D\u092F','<î'],
+  ['\u0930\u0942',':'],
   ['\u091F\u094D\u0930','Vª'],['\u0921\u094D\u0930','Mª'],
   ['\u0922\u094D\u0930','<ªª'],['\u091B\u094D\u0930','Nª'],
   ['\u0915\u0943','Ñ'],
@@ -141,11 +138,14 @@ const ASCII_TO_KRU = new Map([
 ]);
 
 function applyAsciiMap(text: string) {
-  let result = text;
-  for (const [ascii, kru] of ASCII_TO_KRU) {
-    result = result.split(ascii).join(kru);
-  }
-  return result;
+  // Build a regex to match any of the ascii characters to be replaced.
+  // Escaping special regex characters is necessary.
+  const asciiKeys = Array.from(ASCII_TO_KRU.keys()).map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const regex = new RegExp(`(${asciiKeys.join('|')})`, 'g');
+  
+  return text.replace(regex, (match) => {
+    return ASCII_TO_KRU.get(match) || match;
+  });
 }
 
 function splitSegments(text: string) {
@@ -177,7 +177,10 @@ function reorderIMatra(text: string) {
 
 function applyHalfForms(text: string) {
   for (const [uni, kru] of HALF_FORM_MAP) {
-    text = text.split(uni).join(kru);
+    // Only apply half form if followed by another Devanagari character (like a consonant)
+    // Avoid applying if at the end of a word (followed by space, punctuation, etc.)
+    const regex = new RegExp(uni + '(?=[\\u0900-\\u097F\\u200C\\u200D])', 'g');
+    text = text.replace(regex, kru);
   }
   return text;
 }
@@ -215,7 +218,7 @@ function postProcess(text: string) {
   for (const s of devaSurvivors) {
     warnings.push(`UNMAPPED survivor: "${s.char}" ${s.hex} — add to KRU_MAP`);
   }
-  return {output: text, warnings};
+  return {output: text.replace(/[\u200C\u200D]/g, ''), warnings};
 }
 
 function processDevanagariSegment(text: string) {
