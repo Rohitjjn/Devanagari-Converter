@@ -179,7 +179,7 @@ function applyHalfForms(text: string) {
   for (const [uni, kru] of HALF_FORM_MAP) {
     // Only apply half form if followed by another Devanagari character (like a consonant)
     // Avoid applying if at the end of a word (followed by space, punctuation, etc.)
-    const regex = new RegExp(uni + '(?=[\\u0900-\\u097F\\u200C\\u200D])', 'g');
+    const regex = new RegExp(uni + '(?!$)', 'g');
     text = text.replace(regex, kru);
   }
   return text;
