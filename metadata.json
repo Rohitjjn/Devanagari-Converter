@@ -2,5 +2,5 @@
   "name": "Devanagari Converter",
   "description": "Forensically accurate Krutidev 010 ↔ Unicode Devanagari batch converter with archive support.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
