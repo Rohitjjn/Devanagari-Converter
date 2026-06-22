@@ -182,7 +182,7 @@ function applyHalfForms(text: string) {
     const regex = new RegExp(uni + '(?!$)', 'g');
     text = text.replace(regex, kru);
   }
-  return text;
+  return text.replace(/[\u200C\u200D]/g, '');
 }
 
 function mapDevanagariChars(chars: string[]) {
